@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"io"
+	"mime"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -13,6 +14,11 @@ import (
 )
 
 const maxMemory = 10 << 20
+
+var allowThumbnailTypes = [...]string{
+	"image/jpeg",
+	"image/png",
+}
 
 func (cfg *apiConfig) handlerUploadThumbnail(w http.ResponseWriter, r *http.Request) {
 	videoIDString := r.PathValue("videoID")
@@ -61,7 +67,26 @@ func (cfg *apiConfig) handlerUploadThumbnail(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	mediaType := header.Header.Get("Content-Type")
+	mediaType, _, err := mime.ParseMediaType(header.Header.Get("Content-Type"))
+	if err != nil {
+		respondWithError(w, http.StatusBadRequest, "Unable to parse Content-Type", err)
+		return
+	}
+
+	// Media type check
+	if n := len(allowThumbnailTypes); n > 0 {
+		for i := 0; i <= n; i++ {
+			if i == n {
+				respondWithError(w, http.StatusBadRequest, fmt.Sprintf("Cannot upload %s file", mediaType), err)
+				return
+			}
+
+			if mediaType == allowThumbnailTypes[i] {
+				break
+			}
+		}
+	}
+
 	fileExtension := strings.Split(mediaType, "/")[1]
 	filePath := filepath.Join(cfg.filepathRoot, fmt.Sprintf("assets/%s.%s", videoID, fileExtension))
 	dst, err := os.Create(filePath)
