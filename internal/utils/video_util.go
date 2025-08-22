@@ -17,7 +17,6 @@ func GetVideoAspectRatio(filePath string) (string, error) {
 	)
 
 	var out, stderr bytes.Buffer
-
 	cmd.Stdout = &out
 	cmd.Stderr = &stderr
 
@@ -45,4 +44,25 @@ func GetVideoAspectRatio(filePath string) (string, error) {
 	default:
 		return "other", nil
 	}
+}
+
+func ProcessVideoForFastStart(filePath string) (string, error) {
+	tempFilePath := filePath + ".processing"
+
+	cmd := exec.Command(
+		"ffmpeg",
+		"-i", filePath,
+		"-c", "copy",
+		"-movflags", "faststart",
+		"-f", "mp4", tempFilePath)
+
+	var stderr bytes.Buffer
+	cmd.Stderr = &stderr
+
+	err := cmd.Run()
+	if err != nil {
+		return "", fmt.Errorf("ffmpeg failed: %v, stderr: %s", err, stderr.String())
+	}
+
+	return tempFilePath, nil
 }

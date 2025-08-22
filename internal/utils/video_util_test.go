@@ -17,3 +17,12 @@ func TestGetVideoAspectRatio(t *testing.T) {
 		t.Errorf("Expected %s, got %s", expected, actual)
 	}
 }
+
+func TestProcessVideoForFastStart(t *testing.T) {
+	filePath := "/home/ubuntu/Developer/workspace/github.com/aarondever/tubely/samples/boots-video-vertical.mp4"
+	tempFilePath, err := ProcessVideoForFastStart(filePath)
+	if err != nil {
+		t.Errorf(`ProcessVideoForFastStart(%s) = %q, %v`, tempFilePath, filePath, err)
+		return
+	}
+}
